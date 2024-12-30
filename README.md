@@ -7,5 +7,5 @@ git clone https://github.com/shukiv/hosts.click.cpanel/
 
 cd hosts.click.cpanel
 
-./install/sh
+sh install.sh
 
