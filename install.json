@@ -1,0 +1,13 @@
+[
+    {
+        "name": "Preview URL",
+        "order": "999",
+        "type": "link",
+        "group_id": "domains",
+        "id": "hostsclick",
+        "uri": "hosts.click/index.live.php",
+        "icon": "hostsclick.svg",
+        "featuremanager": false
+    }
+]
+
