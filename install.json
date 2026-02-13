@@ -1,0 +1,13 @@
+[
+  {
+    "group_id": "domains",
+    "id": "hosts_click",
+    "icon": "hosts_click.svg",
+    "order": "50",
+    "name": "Preview links",
+    "type": "link",
+    "featuremanager": true,
+    "uri": "hosts-click/index.live.php",
+    "target": "_self"
+  }
+]
