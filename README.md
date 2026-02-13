@@ -1,136 +1,150 @@
 # Hosts.click cPanel + WHM Plugin
 
-This plugin adds Hosts.click preview link generation inside **WHM** and **cPanel** (Jupiter).
+Hosts.click adds **temporary HTTPS preview links** for your hosted domains. This plugin brings Hosts.click into:
 
-## Features
+- **WHM** (root/admin)
+- **cPanel** (Jupiter theme)
 
-- **WHM page**: configure API key + validate license, list all domains, create preview links using domain IPs.
-- **cPanel page**: list user domains with **Temporary URL** buttons (local server IP), plus an advanced form for custom IP + domain.
-- **Domains page injection**: adds a **Temporary URL** button alongside existing actions for each domain (no system files modified).
-- **Licensed servers**: expiry options (1h, 6h, 12h, 24h, 7d, 30d).
-- **Guest mode**: default expiry of 10 minutes (uses guest API endpoint).
+It also injects a “Temporary URL” action in the Domains UI (without editing core cPanel theme files).
+
+## What You Get
+
+- WHM UI to configure an API key, validate license, list domains, and create preview links using each domain’s IP.
+- cPanel UI to generate preview links for the account’s domains.
+- One-click “Temporary URL” on the Domains page (injection script; reversible).
+- Guest mode (no key) and Licensed mode (key) flows.
 
 ## Requirements
 
-- cPanel/WHM (Jupiter theme)
-- PHP available in cpsrvd
+- cPanel/WHM
+- cPanel **Jupiter** theme (this repo includes the Jupiter frontend page)
+- Root shell access
 - Hosts.click API base URL: `https://hostsclick.com` (HTTPS only)
 
-## Install
+## Install (Recommended)
+
+1. Clone this repo or upload it to your server.
+2. Run the installer as root:
 
 ```bash
-sudo /path/to/cpanel-plugin/install.sh
+cd /path/to/hosts.click.cpanel
+sudo bash install.sh
 ```
 
-This will:
-- Copy plugin files into `/usr/local/cpanel/whostmgr/docroot/cgi/hosts-click/`
-- Register the appconfig for **WHM**
-- Register the **cPanel** menu entry using `install.json` + `/usr/local/cpanel/scripts/install_plugin`
-- Create `/var/cpanel/hosts-click/config.json`
-- Registers the cPanel menu entry using `install.json` + `/usr/local/cpanel/scripts/install_plugin`
+The installer will:
+
+- Copy WHM CGI files into:
+  - `/usr/local/cpanel/whostmgr/docroot/cgi/hosts-click/`
+- Copy the Jupiter UI into:
+  - `/usr/local/cpanel/base/frontend/jupiter/hosts-click/`
+- Register the WHM appconfig:
+  - `/var/cpanel/apps/hosts-click.conf`
+- Install/register the cPanel plugin via:
+  - `install.json` + `/usr/local/cpanel/scripts/install_plugin` (when available)
+- Create the plugin config file:
+  - `/var/cpanel/hosts-click/config.json`
+- Refresh cPanel/WHM caches.
 
 ## Uninstall
 
 ```bash
-sudo /path/to/cpanel-plugin/uninstall.sh
+cd /path/to/hosts.click.cpanel
+sudo bash uninstall.sh
 ```
 
 ## Configuration
 
-Open **WHM → Hosts.click** and paste your API key. Use **Test API Key** to validate. The key is stored in:
+1. Open: **WHM → Hosts.click**
+2. Paste your API key and click **Test API Key**.
 
-```
+Config is stored at:
+
+```text
 /var/cpanel/hosts-click/config.json
 ```
 
-## Guest vs Licensed
+### Permissions Note
 
-- **Guest mode** (no valid API key): uses `POST /api/guest-preview-links` with a fixed **10-minute** expiry.
-- **Licensed mode** (valid API key): uses `POST /api/preview-links` and allows expiry options.
+This plugin runs in both WHM and cPanel contexts, so the installer sets permissions so cPanel can read the config directory/file.
+If you need to tighten permissions, do it carefully and re-test both WHM and cPanel pages.
 
-### Required API endpoints
+## Guest vs Licensed Mode
 
-The plugin expects these endpoints:
+- Guest mode (no valid key): uses `POST /api/guest-preview-links` with a fixed **10-minute** expiry.
+- Licensed mode (valid key): uses `POST /api/preview-links` (header `X-API-Key`) and supports expiry options.
 
-- **Licensed**
-  - `POST /api/preview-links` (header `X-API-Key`)
+### Required API Endpoints
+
+- Licensed:
+  - `POST /api/preview-links` (`X-API-Key`)
   - `DELETE /api/preview-links/{token}` (used for API key testing)
+- Guest:
+  - `POST /api/guest-preview-links` (no auth)
 
-- **Guest**
-  - `POST /api/guest-preview-links` (no auth, 10-minute expiry enforced)
+If `guest-preview-links` is not available on your API base URL, guest mode will fail.
 
-If `guest-preview-links` is not implemented yet, guest mode will fail.
+## Files and Locations (On the cPanel Server)
 
-## Notes
-
-- Domains are read from `/etc/userdatadomains`.
-- IP resolution is based on the `ip=` field in that file.
-- No Jupiter customizations are required for the plugin menu entry or icon.
-
-## Production fixes (Feb 3, 2026)
-
-This section documents the exact changes applied on the cPanel server (`devcp`)
-to make the plugin appear in WHM/cPanel and stop 500/404 errors.
-
-### Files and locations
-
-- WHM page: `/usr/local/cpanel/whostmgr/docroot/cgi/hosts-click/whm.php`
-- cPanel page (Jupiter): `/usr/local/cpanel/base/frontend/jupiter/hosts-click/index.live.php`
-- Shared logic: `/usr/local/cpanel/whostmgr/docroot/cgi/hosts-click/common.php`
-- Appconfigs:
+- WHM page:
+  - `/usr/local/cpanel/whostmgr/docroot/cgi/hosts-click/whm.php`
+- cPanel page (Jupiter):
+  - `/usr/local/cpanel/base/frontend/jupiter/hosts-click/index.live.php`
+- Shared logic:
+  - `/usr/local/cpanel/whostmgr/docroot/cgi/hosts-click/common.php`
+- WHM appconfig:
   - `/var/cpanel/apps/hosts-click.conf`
-  - `/var/cpanel/apps/hosts-click-cpanel.conf`
-- Config file: `/var/cpanel/hosts-click/config.json`
-- cPanel icon is provided via `install.json` (Jupiter spritemap).
+- Config file:
+  - `/var/cpanel/hosts-click/config.json`
 
-### Required appconfig contents
+## How Domain/IP Detection Works
 
-`/var/cpanel/apps/hosts-click.conf`:
-```
-name=hosts-click
-displayname=HostsClick
-service=whostmgr
-url=/cgi/hosts-click
-entryurl=hosts-click/whm.php
-acls=all
-icon=/cgi/hosts-click/assets/hc_cp.svg
-order=50
-user=root
-target=_self
-group=plugins
-```
+- Domains are read from:
+  - `/etc/userdatadomains`
+- IP resolution uses the `ip=` field from that file.
 
-For cPanel, use `install.json` and `/usr/local/cpanel/scripts/install_plugin`.
+## Troubleshooting
 
-### Fixes applied
+- Plugin does not appear in WHM/cPanel:
+  - Re-run `install.sh` and then run:
 
-- cPanel page renamed to **.live.php** (required for `CPANEL_PHPCONNECT_SOCKET`).
-- cPanel page embeds inside Jupiter via `$cpanel->header()`/`$cpanel->footer()`.
-- Public IP detection added for private IPs in `/etc/userdatadomains`.
-- Permissions fixed so cPanel users can read required files:
-  - `chmod 755 /var/cpanel/hosts-click`
-  - `chmod 644 /var/cpanel/hosts-click/config.json`
-  - `chmod 644 /etc/userdatadomains`
-- Feature manager support is handled by `install_plugin` via `install.json`.
-- cPanel icon installed at the Jupiter application icon path above.
-- Duplicate appconfig **removed** (breaks UI):
-  - Delete `/var/cpanel/apps/Hosts_click.conf` or `/var/cpanel/apps/Hosts-click.conf` if they appear.
-
-### Cache refresh commands
-
-```
-/usr/local/cpanel/bin/register_appconfig /var/cpanel/apps/hosts-click.conf
-/usr/local/cpanel/bin/register_appconfig /var/cpanel/apps/hosts-click-cpanel.conf
-/usr/local/cpanel/bin/update_appconfig_apps
-/usr/local/cpanel/bin/refresh_plugin_cache
-/usr/local/cpanel/bin/resetcaches
+```bash
+/usr/local/cpanel/bin/update_appconfig_apps || true
+/usr/local/cpanel/bin/refresh_plugin_cache || true
+/usr/local/cpanel/bin/resetcaches || true
 ```
 
-### Sanity checks
+- 500 errors / blank page:
+  - Run syntax checks:
 
-- WHM URL: `/cgi/hosts-click/whm.php`
-- cPanel URL: `/frontend/jupiter/hosts-click/index.live.php`
-- Run syntax checks after changes:
-  - `php -l /usr/local/cpanel/base/frontend/jupiter/hosts-click/index.live.php`
-  - `php -l /usr/local/cpanel/whostmgr/docroot/cgi/hosts-click/whm.php`
-  - `php -l /usr/local/cpanel/whostmgr/docroot/cgi/hosts-click/common.php`
+```bash
+php -l /usr/local/cpanel/whostmgr/docroot/cgi/hosts-click/whm.php
+php -l /usr/local/cpanel/whostmgr/docroot/cgi/hosts-click/common.php
+php -l /usr/local/cpanel/base/frontend/jupiter/hosts-click/index.live.php
+```
+
+- cPanel page must be `*.live.php`:
+  - The Jupiter page is named `index.live.php` to satisfy cPanel’s socket bootstrap expectations.
+
+## Updating
+
+To update, pull new changes and re-run the installer:
+
+```bash
+cd /path/to/hosts.click.cpanel
+git pull
+sudo bash install.sh
+```
+
+## Security Notes
+
+- Your API key is stored in a JSON config file on the server.
+- Prefer limiting access to the config directory to the minimum required for WHM and cPanel to function.
+
+## License / Support
+
+Issues and PRs are welcome. Include:
+
+- cPanel version
+- Theme (Jupiter)
+- PHP error output (if any)
+- The exact install/uninstall commands you ran
