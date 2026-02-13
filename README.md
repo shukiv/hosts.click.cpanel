@@ -29,6 +29,13 @@ Run as `root`:
 curl -fsSL https://hostsclick.com/downloads/hosts-click-cpanel-installer.sh | bash
 ```
 
+## Download Installer
+
+```bash
+curl -fsSL https://hostsclick.com/downloads/hosts-click-cpanel-installer.sh -o hosts-click-cpanel-installer.sh
+bash hosts-click-cpanel-installer.sh
+```
+
 ## Download Plugin (tar.gz)
 
 ```bash
