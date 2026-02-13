@@ -21,6 +21,20 @@ It also injects a “Temporary URL” action in the Domains UI (without editing 
 - Root shell access
 - Hosts.click API base URL: `https://hostsclick.com` (HTTPS only)
 
+## Quick Install (Recommended)
+
+Run as `root`:
+
+```bash
+curl -fsSL https://hostsclick.com/downloads/hosts-click-cpanel-installer.sh | bash
+```
+
+## Download Plugin (tar.gz)
+
+```bash
+curl -fsSL https://hostsclick.com/downloads/hosts-click-cpanel-plugin.tar.gz -o hosts-click-cpanel-plugin.tar.gz
+```
+
 ## Install (Recommended)
 
 1. Clone this repo or upload it to your server.
@@ -50,6 +64,22 @@ The installer will:
 ```bash
 cd /path/to/hosts.click.cpanel
 sudo bash uninstall.sh
+```
+
+## Uninstall (From Downloaded tar.gz)
+
+This is useful when you installed from the hosted downloads and just want to remove it quickly.
+
+If the archive contains `cpanel-plugin/`:
+
+```bash
+tmp=$(mktemp -d) && curl -fsSL https://hostsclick.com/downloads/hosts-click-cpanel-plugin.tar.gz -o "$tmp/plugin.tar.gz" && tar -xzf "$tmp/plugin.tar.gz" -C "$tmp" && bash "$tmp/cpanel-plugin/uninstall.sh"
+```
+
+If the archive extracts files into the temp directory root (common):
+
+```bash
+tmp=$(mktemp -d) && curl -fsSL https://hostsclick.com/downloads/hosts-click-cpanel-plugin.tar.gz -o "$tmp/plugin.tar.gz" && tar -xzf "$tmp/plugin.tar.gz" -C "$tmp" && bash "$tmp/uninstall.sh"
 ```
 
 ## Configuration
